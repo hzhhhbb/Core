@@ -11,6 +11,7 @@ Castle 动态代理为您的对象生成代理，你可以使用它们来透明�
 * [Entity Framework Core](https://github.com/aspnet/EntityFrameworkCore) 在包[Microsoft.EntityFrameworkCore.Proxies](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.Proxies)中使用它来提供延迟加载代理
 
 如果您不熟悉DynamicProxy，则可以阅读[快速介绍](dynamicproxy-introduction.md)，浏览该库中核心类型的描述,或者进行更高级的详细讨论：
+
 * [代理类型](dynamicproxy-kinds-of-proxy-objects.md)
 * [泄漏代理的对象](dynamicproxy-leaking-this.md)
 * [使代理生成钩子功能纯粹](dynamicproxy-generation-hook-pure-function.md)

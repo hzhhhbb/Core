@@ -4,7 +4,6 @@ DynamicProxy使用`System.Reflection`和`System.Reflection.Emit`创建代理类�
 
 在实践中，这通常无关紧要，但是对于反射生成代理类型的框架或库（例如Dependency Injection容器）而言，这可能会成为问题。
 
-
 ## 当你的代码在Mono上运行时
 
 在Mono（至少5.16版本）上，DynamicProxy可能无法正确再现代理类型中的默认参数值...
