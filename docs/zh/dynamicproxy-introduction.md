@@ -24,7 +24,7 @@ DynamicProxy与内置在CLR中的代理实现不同，后者要求代理类继�
 
 > 在最常见的情况下，代理是一个类，它充当另一件事的接口。 另一件事可能是任何东西：网络连接，内存中的大对象，文件或其他昂贵或无法复制的其他资源。
 
-通过《黑客帝国》，来帮助理解代理。
+通过电影《黑客帝国》，来帮助理解代理。
 
 ![](images/matrix.jpg)
 
@@ -46,15 +46,14 @@ WCF代理是程序员日常工作中透明代理的一个很好的例子。 从�
 
 上面的图片显示了它是如何工作的。
 
-* The blue rectangle is the proxy. Someone calls a method on the proxy (denoted by yellow arrow). Before the method reaches the target object it goes through a pipeline of interceptors.
-* Each interceptor gets an `IInvocation` object (which is another important interface from DynamicProxy) that holds all the information about the current request, such as the `MethodInfo` of the intercepted method, along with its parameters and preliminary return value; references to the proxy and the proxied object; and a few other bits. Each invoked interceptor gets a chance to inspect and change those values before the actual method on the target object is called. For example, an interceptor may log debug information about the arguments passed to the method, or validate them.
-* Each interceptor can call `invocation.Proceed()` to pass control further down the pipeline. Interceptors usually call this method just once, but multiple calls are allowed, e.g. when implementing a "retry". (It is also permissible to cut short the interception pipeline and omit the call to `Proceed` altogether.)
-* When the last interceptor calls `Proceed`, the actual method on the proxied object is invoked, and then the call travels back, up the pipeline (green arrow) giving each interceptor another chance to inspect and act on the returned value or thrown exceptions.
-* Finally the proxy returns the value held by `invocation.ReturnValue` as the return value of called method.
+* 蓝色矩形就是代理。有人在代理上调用方法（用黄色箭头表示）。 在方法到达目标对象之前，它会通过拦截器的管道。
+* 每个拦截器都有一个`IInvocation`对象（这是DynamicProxy的另一个重要接口），该对象保存有关当前请求的所有信息，例如被拦截方法的`MethodInfo`以及其参数和初步返回值。 对代理和代理对象的引用； 和其他一些内容。 每个调用的拦截器都可以在调用目标对象的实际方法之前检查和更改这些值。 例如，拦截器可以记录有关传递给该方法的参数的调试信息，或对其进行验证。
+* 当最后一个拦截器调用`Proceed`时，将调用代理对象的实际方法，然后沿着管道返回（绿色箭头），每个拦截器都可以再次检查返回值或捕获异常。
+* 最后，代理返回由`invocation.ReturnValue`持有的值，作为被调用方法的返回值。
 
-### Interceptor example
+### 拦截器示例
 
-If this was not clear enough, here's a sample interceptor, that shows how it works:
+如果还不够清楚，这里有一个拦截器的示例，说明了它是如何工作的:
 
 ```csharp
 [Serializable]
@@ -80,8 +79,8 @@ public class Interceptor : IInterceptor
 }
 ```
 
-Hopefully, at this stage you have a pretty good idea about what DynamicProxy is, how it works, and what it's good for. In the next chapter we'll dive into some more advanced capabilities, plugging into, and influencing the process of generating proxy class.
+希望在此阶段，您对DynamicProxy是什么，它如何工作以及有什么好处有一个很好的了解。 在下一章中，我们将深入探讨一些更高级的功能，它们会插入并影响生成代理类的过程。
 
 ## See also
 
-[Kinds of proxy objects](dynamicproxy-kinds-of-proxy-objects.md)
+[代理类型](dynamicproxy-kinds-of-proxy-objects.md)
