@@ -1,13 +1,13 @@
-# SRP applies to interceptors
+# 拦截器的单一职责原则
 
-SRP stands for Single Responsibility Principle, which means that a class should do just one thing. Many people seem to forget about it when it comes to interceptors. They create one monstrous interceptor class that tries to do all the things they need from Dynamic Proxy – logging, security checking, parameter verification, augmenting target objects with behavior and many more.
+单一职责原则意味着一个类只做一件事。很多人在使用拦截器的时候似乎都忘记了它。他们创建了一个可怕的拦截器类，尝试执行动态代理中所需的所有操作，包括日志记录，安全性检查，参数验证，使用行为扩展目标对象等等。
 
-Remember that DynamicProxy lets you have many interceptors per method call. Use this ability to split behavior between interceptors. You may end up with some general purpose interceptors for things like logging that you use for each intercepted method on each class. As long as all it does is logging – that's OK.
+请记住，DynamicProxy使你可以在每个方法调用中使用许多拦截器。 使用此功能可以在拦截器之间拆分行为。 您可能最终会得到一些通用的拦截器来处理诸如日志记录之类的事情，这些日志记录用于每个类上每个被拦截的方法。 只要它所做的就是记录日志，就可以了。
 
-You may end up with some interceptors that are used for methods on just some classes, like classes inheriting from common base class. As long as these interceptors do just one thing – that's fine.
+你可能最终会得到一些拦截器，这些拦截器仅用于某些类的方法，例如从通用基类继承的类。 只要这些拦截器仅做一件事就没问题。
 
-You may end up with some interceptors that exist solely for the purpose of intercepting just a single method on specific class or interface. That also is fine. Use interceptor selectors to match interceptors to their respective targets, and don't be afraid to have multiple interceptors per method.
+你可能最终得到一些拦截器，这些拦截器仅用于拦截特定类或接口上的单个方法，也没问题。 使用拦截器选择器将拦截器与它们各自的目标匹配，不要害怕每个方法有多个拦截器。
 
 ## See also
 
-* [Use proxy generation hooks and interceptor selectors for fine grained control](dynamicproxy-fine-grained-control.md)
+* [使用*代理生成钩子*和*拦截器选择器*进行精细控制](dynamicproxy-fine-grained-control.md)
