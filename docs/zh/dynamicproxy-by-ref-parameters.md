@@ -1,20 +1,20 @@
-# Behavior of by-reference parameters during interception
+# 拦截期间引用参数的行为
 
-DynamicProxy has support for by-reference parameters (that is, those having a `ref` or `out` modifier in C#, or a `ByRef` modifier in Visual Basic). However, those parameters work *slightly* differently during an intercepted invocation than they would during a regular (non-intercepted) method call. In most use cases, you will probably not notice this difference at all; but when you do, it can be helpful to understand why it exists.
+DynamicProxy支持引用参数（即，在C＃中具有“ ref”或“ out”修饰符，在Visual Basic中具有“ ByRef”修饰符的参数）。 但是，这些参数在被拦截的调用中的工作方式与常规方法（非拦截）调用中的工作方式“稍有不同”。 在大多数使用情况下，您可能根本不会注意到这种差异。 但是当您这样做时，了解其存在可能会有所帮助。
 
-**During a regular method invocation**, a by-reference parameter is a perfect alias for the variable being passed by the caller: Changing the value of a `ref` parameter, for instance, instantly changes the aliased variable.
+**在常规方法调用期间**, 一个引用参数是调用者传递变量的完美别名：例如，更改`ref`参数的值会立即更改别名变量的值。
 
-**During a DynamicProxy method interception**, on the other hand, changes to a `ref` parameter (which you would perform using the `Arguments` property or `SetArgumentValue` method of the `IInvocation` instance) are not immediately reflected in the aliased variable. The change in the aliased variable will only become visible upon completion of the interception. This is because DynamicProxy essentially "buffers" all invocation arguments in a separate storage location (`IInvocation.Arguments`) for the whole duration of a method interception.
+**在DynamicProxy方法拦截期间**, 另一方面，对ref参数的更改（你将使用IInvocation实例的Arguments属性或SetArgumentValue方法执行）不会立即反映在别名变量中。 别名变量中的更改仅在拦截完成后才可见。 这是因为DynamicProxy实际上在方法拦截的整个过程中将所有调用参数“缓冲”在单独的存储位置（`IInvocation.Arguments`）中。
 
-* When interception begins, DynamicProxy copies all arguments provided by the caller over into the `Arguments` array of the `IInvocation` object. This copying happens "by value". Those `Arguments` indices representing a by-reference parameter are *not* aliased to a caller variable; they are distinct storage locations. Therefore, changing `Arguments` is not immediately propagated.
+* 当拦截开始时，DynamicProxy“按值”复制所有调用者传递过来的参数到`IInvocation`对象的`Arguments`数组中。那些表示引用参数的`Arguments`不索引为调用者别量变量。
 
-* When interception ends, DynamicProxy will copy the final values from `Arguments` back to the original `ref` and `out` parameters. This is the moment when any changes become visible in the aliased variables of the caller.
+* 拦截结束后，DynamicProxy会将最终值从Arguments复制回原始的ref和out参数。调用者在这时就可以看到别名变量的更改。
 
-In short, modifying a by-reference parameter during interception will be reflected in the aliased variable *eventually, but not immediately*.
+简而言之，在拦截期间修改引用参数将*最终反映*在参数变量中，当不是*立即反映*。
 
-## Demonstration
+## 示范
 
-Let's look at this difference in behavior in action. The following code examples will be based on this interface:
+让我们看一下这种行为上的差异。 以下代码示例将基于此接口:
 
 ```csharp
 public interface IService
@@ -23,11 +23,11 @@ public interface IService
 }
 ```
 
-### How by-reference parameters work in plain C# (or Visual Basic)
+### 引用参数如何在普通C＃（或Visual Basic）中工作
 
-As stated above, by-reference parameters are normally perfect aliases for other variables, and changes to them should become immediately observable on those aliased variables.
+如上所述，让形参成为实参的别名变量,对形参执行的任何操作都是对实参执行的。
 
-We can see this behavior using the following implementation of `IService`:
+我们可以使用以下IService的实现来看到这种行为：
 
 ```csharp
 sealed class Service : IService
@@ -42,7 +42,7 @@ sealed class Service : IService
 delegate void ExecuteDelegate(ref int n);
 ```
 
-and then using and invoking `IService.Execute` as follows:
+然后按如下方式使用和调用`IService.Execute`：
 
 ```csharp
 int n = 0;
@@ -60,11 +60,11 @@ service.Execute(ref n);
 Console.WriteLine(n);          // => 42
 ```
 
-Note that inside the lambda, we change the `alias` parameter but can observe the change to `n` (to which it is aliased) immediately. 
+请注意，在lambda中，我们更改了`alias`参数，可以立即观察到对别名`n`的更改。
 
-### How by-reference parameters work during a DynamicProxy interception
+### 引用参数在DynamicProxy拦截期间如何工作
 
-As explained above, changes to `ref` parameters will be observable in the aliased variable only *after, but not during* interception. Let's see an example. Instead of implementing `IService` ourselves, we will let DynamicProxy create an instance. So we will need an interceptor:
+如上所述，对`ref`参数的更改将仅在拦截之后（而不是在拦截期间）在别名变量中可见。 让我们来看一个例子。 除了让我们自己实现`IService`之外，我们将让DynamicProxy创建一个实例。 因此，我们需要一个拦截器：
 
 ```csharp
 sealed class Interceptor : IInterceptor
@@ -77,7 +77,7 @@ sealed class Interceptor : IInterceptor
 }
 ```
 
-Note the similarity to the above example's implementation of `IService`. The basic idea here is the same: We want to be able to define what should happen during method invocation inside a lambda that has access to the aliased variable:
+注意与上述示例的`IService`实现的相似性。 这里的基本思想是相同的：我们希望能够定义在可以访问别名变量的lambda内，方法调用期间应该发生的情况:
 
 ```csharp
 int n = 0;
@@ -95,5 +95,4 @@ service.Execute(ref n);
 Console.WriteLine(n);          // => 42
 ```
 
-Note that this time, changing the argument value during invocation does not immediately affect the aliased variable `n`,
-even though it is eventually updated.
+请注意，这次，在调用期间更改参数值不会立即影响别名变量`n`，即使最终会更新。
