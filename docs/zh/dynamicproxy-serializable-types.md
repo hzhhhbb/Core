@@ -1,3 +1,3 @@
-# Make your supporting classes serializable
+# 使你的类可序列化
 
-If you're going to be serializing your proxies, you should make all the classes that go with it serializable. That includes proxy generation hooks, interceptors and interceptor selectors. Otherwise, you will get an exception when trying to serialize your proxies. It is not mandatory, but I find it useful. Notice that you will need this also when persisting your proxy assembly to disk.
+如果要序列化代理，则应使与之相关的所有类都可序列化。 这包括代理生成钩子，拦截器和拦截器选择器。 否则，尝试序列化代理时会出现异常。 它不是强制性的，但我认为它很有用。 请注意，将代理程序集持久化到磁盘时，也将需要此功能。
