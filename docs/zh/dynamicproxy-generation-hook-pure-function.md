@@ -1,9 +1,9 @@
-# Make proxy generation hooks purely functional
+# 使代理生成钩子功能纯粹
 
-Pure function, is a function that for given set of inputs always returns the same output. In case of proxy generation hook, it means that two equal (as specified by overridden `Equals`/`GetHashCode` methods) proxy generation hooks will for given type to proxy return the same values from their methods, and when asked again about the same type will again return the same values/throw the same exceptions.
+纯函数是对于给定的一组输入始终返回相同输出的函数。 在代理生成钩子的情况下，这意味着对于给定类型的两个相等的代理生成钩子（由重写的Equals / GetHashCode方法指定），代理将从其方法返回相同的值，并在再次询问相同的值时，类型将再次返回相同的值/引发相同的异常。
 
-This is a major assumption that DynamicProxy makes, and that's what makes the caching mechanism work. If proxy generation hook is equal to the one already used to generate a proxy type, DynamicProxy will assume it would return the same values as the other one, which would result in identical proxy type, so it cuts through the generation process and returns the existing proxy type.
+这是DynamicProxy做出的主要假设，这就是使缓存机制起作用的原因。 如果代理生成钩子等于已用于生成代理类型的钩子，则DynamicProxy将假定它返回与另一个代理钩子相同的值，这将导致相同的代理类型，因此它会缩短生成过程并返回现有的 代理类型。
 
 ## See also
 
-* [Overriding Equals/GetHashCode on proxy generation hook](dynamicproxy-generation-hook-override-equals-gethashcode.md)
+* [在代理生成钩子上重写Equals / GetHashCode](dynamicproxy-generation-hook-override-equals-gethashcode.md)
