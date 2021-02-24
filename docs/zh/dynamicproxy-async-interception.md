@@ -1,22 +1,21 @@
-# Asynchronous interception
+# 异步拦截
 
-This article discusses several interception scenarios related to asynchrony. We'll look at these scenarios in increasing order of implementation difficulty:
+本文讨论了几种与异步有关的拦截方案。 我们将按实现难度递增的顺序查看这些方案：
 
- * Intercepting awaitable methods that don't produce a return value (e.g. `Task`), with and without using `async`/`await` in interceptor code
+ * 在拦截器代码中使用或不使用`async`/`await`来拦截不会产生返回值的可等待方法（例如`Task`）
 
- * Intercepting awaitable methods that do produce a return value (e.g. `Task<TResult>`), with using `async`/`await` in interceptor code
+ * 在拦截器代码中使用`async`/`await`来拦截产生返回值的可等待方法（例如`Task<TResult>`）
 
- * Using `invocation.Proceed()` in combination with `async`/`await`
+ * 将`invocation.Proceed()`与`async`/`await`结合使用
 
-This article contains C# code examples that make use of the `async`/`await` keywords. Before you proceed, please make sure that you have a good understanding of how these work. They are merely "syntactic sugar" that cause the .NET compilers to rewrite an async method to a state machine with continuations. The [Async/Await FAQ by Stephen Toub](https://devblogs.microsoft.com/pfxteam/asyncawait-faq/) explains these keywords in more detail.
+本文包含使用`async`/`await`关键字的C＃代码示例。 在继续之前，请确保您对这些工作原理有很好的了解。 它们只是“语法糖”，将使.NET编译器把异步方法重写为状态机。文章 [Async/Await FAQ by Stephen Toub](https://devblogs.microsoft.com/pfxteam/asyncawait-faq/) 更加详细地解释了这些关键字。
 
-For brevity's sake, the examples shown in this article will focus on an interceptor's `Intercept` method. Assume that code examples are backed by the following code:
-
+方便起见，本文中显示的示例将重点介绍拦截器的`Intercept`方法。 假定代码示例由以下代码为基础：
 
 ```csharp
 var serviceProxy = proxyGenerator.CreateInterfaceProxyWithoutTarget<IService>(new AsyncInterceptor());
 
-// Examples will show how interception gets triggered:
+// 示例将显示如何触发拦截：
 int result = await serviceProxy.GetAsync();
 
 public interface IService
@@ -27,7 +26,7 @@ public interface IService
 
 class AsyncInterceptor : IInterceptor
 {
-	// Examples will mostly focus on this method's implementation:
+	// 示例将主要集中于此方法的实现：
 	public void Intercept(IInvocation invocation)
 	{
 		...
@@ -35,11 +34,9 @@ class AsyncInterceptor : IInterceptor
 }
 ```
 
+## 拦截不会产生返回值的可等待方法
 
-## Intercepting awaitable methods that don't produce a return value
-
-Intercepting awaitable methods (e.g. ones with a return type of `Task`) is fairly easy and not much different from intercepting non-awaitable methods. You'll simply have to set the intercepted invocation's return value to any valid `Task` object.
-
+拦截可等待的方法（例如，返回类型为`任务`的方法）非常容易，与拦截一般的方法没有太大区别。 您只需要将拦截的调用的返回值设置为任何有效的`Task`对象即可。
 
 ```csharp
 // calling code:
@@ -52,8 +49,7 @@ public void Intercept(IInvocation invocation)
 }
 ```
 
-
-That wasn't very interesting, and in real-world scenarios you'll quickly reach a point where you'd like to use `async`/`await`. That, however, is also fairly trivial:
+那不是很有趣，在现实世界中，你会很快就会想要使用`async`/`await`。然而，这也相当微不足道：
 
 
 ```csharp
@@ -74,19 +70,18 @@ private async Task InterceptAsync(IInvocation invocation)
 }
 ```
 
+一旦你想向调用者返回一个值，事情就变得更复杂了。让我们再看看这个！
 
-Things get more complicated once you want to return a value to the calling code. Let's look at that next!
+## 拦截产生返回值的可等待方法
+
+当拦截产生返回值的可等待方法（例如返回类型为`Task<TResult>`的方法）时，重要的是要记住，被执行的第一个`await`立即返回给调用者。（C#编译器将把`await`后面的语句移到一个continuation中，该continuation将在`await完成`后执行。）
+
+换句话说，拦截器中的第一个`await`就完成了代理方法的拦截！
+
+DynamicProxy要求拦截器（或代理目标对象）为拦截的`非void`方法提供返回值。当然，在异步场景中也有同样的要求。因为第一个`await`会提前返回到调用者，所以必须确保在任何`await`之前设置拦截调用的返回值。
 
 
-## Intercepting awaitable methods that produce a return value
-
-When intercepting an awaitable method that produces a return value (such as a method with a return type of `Task<TResult>`), it is important to remember that the very first `await` that gets hit by execution effectively returns to the caller right away. (The C# compiler will move the statements following the `await` into a continuation that will execute once the `await` "completes".)
-
-In other words, the very first `await` inside your interceptor completes the proxy method interception!
-
-DynamicProxy requires that interceptors (or the proxy target object) provide a return value for intercepted non-`void` methods. Naturally, the same requirement holds in an async scenario. Because the first `await` causes an early return to the caller, you must make sure to set the intercepted invocation's return value prior to any `await`.
-
-We already did that at the end of the last section; let's quickly go back and take a closer look:
+我们已经在上一节结束时做过了；让我们再快速并仔细查看一下：
 
 
 ```csharp
@@ -110,6 +105,7 @@ private async Task InterceptAsync(IInvocation invocation)
 	// At this point, interception has already completed!
 
 	invocation.ReturnValue = ...;
+	// 在此设置的返回值将对调用者不可见
 	// ^ Any assignments to `invocation.ReturnValue` are no longer
 	//   observable by the calling code, which already received its
 	//   return value earlier (specifically, the `Task` produced by
@@ -205,7 +201,7 @@ private async Task InterceptAsync(IInvocation invocation)
 Phew! And things get even more complex once we want to do an `invocation.Proceed()` to a succeeding interceptor or the proxy's target method. Let's look at that next!
 
 
-## Using `invocation.Proceed()` in combination with `async`/`await`
+## 将`invocation.Proceed()`与`async`/`await`结合使用
 
 Here's a quick recap about `invocation.Proceed()`: This method gets used to proceed to the next interceptor in line, or, if there is no other interceptor but a proxy target object, to that. Remember this image from the [introduction to DynamicProxy](dynamicproxy-introduction.md#interception-pipeline):
 
