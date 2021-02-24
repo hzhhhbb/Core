@@ -13,7 +13,7 @@ Castle 动态代理为您的对象生成代理，你可以使用它们来透明�
 如果您不熟悉DynamicProxy，则可以阅读[快速介绍](dynamicproxy-introduction.md)，浏览该库中核心类型的描述,或者进行更高级的详细讨论：
 * [代理类型](dynamicproxy-kinds-of-proxy-objects.md)
 * [泄漏代理的对象](dynamicproxy-leaking-this.md)
-* [使代理生成钩子完全起作用](dynamicproxy-generation-hook-pure-function.md)
+* [使代理生成钩子功能纯粹](dynamicproxy-generation-hook-pure-function.md)
 * [在代理生成钩子上重写Equals / GetHashCode](dynamicproxy-generation-hook-override-equals-gethashcode.md)
 * [使你的类可序列化](dynamicproxy-serializable-types.md)
 * [使用代理生成钩子和拦截器选择器进行精细控制](dynamicproxy-fine-grained-control.md)
