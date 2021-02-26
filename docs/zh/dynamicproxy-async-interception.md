@@ -80,7 +80,6 @@ private async Task InterceptAsync(IInvocation invocation)
 
 DynamicProxy要求拦截器（或代理目标对象）为拦截的`非void`方法提供返回值。当然，在异步场景中也有同样的要求。因为第一个`await`会提前返回到调用者，所以必须确保在任何`await`之前设置拦截调用的返回值。
 
-
 我们已经在上一节结束时做过了；让我们再快速并仔细查看一下：
 
 
@@ -115,9 +114,7 @@ private async Task InterceptAsync(IInvocation invocation)
 }
 ```
 
-
-So, how would we communicate a return value back to the calling code when the intercepted method's return type is not just `Task`, but say, `Task<int>`? The following example shows how you can control the result of the task received by calling code:
-
+那么，当截获方法的返回类型不仅仅是`Task`，而是`Task<int>`时，我们如何将返回值传递回调用代码呢？以下示例显示如何通过调用代码来控制接收到的任务的结果：
 
 ```csharp
 // calling code:
@@ -141,9 +138,7 @@ private async Task<int> InterceptAsync(IInvocation invocation)
 }
 ```
 
-
-Unfortunately, it usually won't be *that* easy in real-world scenarios, where you cannot assume that every method that your interceptor deals with will have the exact same return type of `Task<int>`. So, instead of being able to just comfortably `return someInt;` from a `async Task<int>` method, you'll have to resort to a non-generic `Task`, a `TaskCompletionSource`, and some reflection:
-
+不幸的是，在现实世界中，情况通常并非那么简单，在这种情况下，您不能假设拦截器处理的每个方法都具有与`Task<int>`完全相同的返回类型。 因此，除了只能从`async Task<int>`方法中`return someInt`;之外，你还必须求助于非通用的`Task`，`TaskCompletionSource`和一些反射：
 
 ```csharp
 // calling code--as before:
@@ -197,20 +192,17 @@ private async Task InterceptAsync(IInvocation invocation)
 }
 ```
 
-
-Phew! And things get even more complex once we want to do an `invocation.Proceed()` to a succeeding interceptor or the proxy's target method. Let's look at that next!
-
+一旦我们想对后续的拦截器或代理的目标方法执行`invocation.Proceed()`，事情就会变得更加复杂。 让我们接下来看看！
 
 ## 将`invocation.Proceed()`与`async`/`await`结合使用
 
-Here's a quick recap about `invocation.Proceed()`: This method gets used to proceed to the next interceptor in line, or, if there is no other interceptor but a proxy target object, to that. Remember this image from the [introduction to DynamicProxy](dynamicproxy-introduction.md#interception-pipeline):
+这是关于`invocation.Proceed()`的快速回顾：该方法用于继续执行下一个拦截器，如果没有其他拦截器，而是代理目标对象，则使用该方法。 图片来源：[Castle 动态代理 - 简介](dynamicproxy-introduction.md#interception-pipeline)
 
 ![](images/proxy-pipeline.png)
 
-Let's get straight to the point: `Proceed()` will not do what you might expect in an async scenario! Remember that the very first `await` inside your interceptor completes interception, i.e. causes an early return to the calling code? This means that interception starts to "bubble back up" towards the calling code (i.e. along the green arrows in the above picture).
+让我们直截了当地指出：在异步情况下，`Proceed()`并不会达到您的期望！ 还记得拦截器中的第一个`await`完成了拦截，即导致提早返回调用代码吗？ 这意味着拦截开始朝调用代码`冒泡`（即沿着上图中的绿色箭头）。
 
-Therefore, after having `await`-ed in your interceptor, interception has completed at the position of the last green arrow. Calling `invocation.Proceed` in the continuation (i.e. after the `await`) will then simply advance to the very first interceptor again... that's likely not what you want, and can cause infinite loops and other unexpected malfunctions.
-
+因此，在拦截器中`await`后，拦截已在最后一个绿色箭头的位置完成。 然后在连续中（即在`await`之后）调用`invocation.Proceed`会简单地再次进入第一个拦截器...这可能不是您想要的，并且可能导致无限循环和其他意外故障。
 
 ```csharp
 // calling code:
@@ -230,11 +222,9 @@ private async Task InterceptAsync(IInvocation invocation)
 }
 ```
 
+为了使您能够解决此问题，DynamicProxy提供了另一种方法`invocation.CaptureProceedInfo()`，该方法可让您捕获调用在侦听管道中的当前位置（即，它沿黄色箭头的当前位置）。 此方法向您返回一个对象，您可以使用该对象继续从此相同位置继续进行拦截。
 
-In order for you to be able to work around this problem, DynamicProxy offers another method, `invocation.CaptureProceedInfo()`, which allows you to capture the invocation's current position in the interception pipeline (i.e. where along the yellow arrows it is currently located). This method returns an object to you which you can use to continue interception from this very same location onward.
-
-The solution to the problem demonstrated above now becomes very simple:
-
+上面演示的问题的解决方案现在变得非常简单：
 
 ```csharp
 // calling code--as before:
@@ -270,19 +260,16 @@ private async Task InterceptAsync(IInvocation invocation)
 }
 ```
 
+## 结语
 
-## Closing remarks
-
- * As you have seen, async interception is only trivial in very simple scenarios, but can get quite complex very quickly. If you don't feel comfortable writing such code yourself, look for third-party libraries that help you with async interception, for example:
-
-   * [Castle.Core.AsyncInterceptor](https://www.nuget.org/packages/Castle.Core.AsyncInterceptor) (third-party, despite the Castle Project's package namespace)
+ * 正如您所看到的，异步截获在非常简单的场景中只是微不足道的，但是很快就会变得非常复杂。如果您不喜欢自己编写这样的代码，请寻找有助于异步拦截的第三方库，例如：
+   * [Castle.Core.AsyncInterceptor](https://www.nuget.org/packages/Castle.Core.AsyncInterceptor) (第三方，尽管是程序包的命名空间是Castle Project的)
 
    * [stakx.DynamicProxy.AsyncInterceptor](https://www.nuget.org/packages/stakx.DynamicProxy.AsyncInterceptor)
 
-   If you are the author of a generally useful async interception helper library, and would like to add your library to the above list, feel free to submit a PR.
+   如果您是一个对异步拦截有帮助的程序库的作者，并且想将您的库添加到上面的列表中，请随时提交PR。
 
- * The above examples have shown cases where a "stale" invocation object has its `ReturnValue` repeatedly set, even though only the first value might be observed by calling code. It is however possible that invocation objects are recorded somewhere, and could be inspected later on. Other parties might then observe a `ReturnValue` that does not reflect what the original caller got.
+ * 上面的示例显示了`过时`调用对象重复设置其`ReturnValue`的情况，即使调用代码可能只观察到第一个值。然而，调用对象可能被记录在某个地方，并且可以在以后进行检查。其他方可能会观察到一个`ReturnValue`，它不能反映原始调用者得到了什么。
+   因此，异步拦截器在拦截结束时将`ReturnValue`还原为实际返回到调用代码的值可能是一种好的做法。
 
-   Because of that, it might be good practice for your async interceptors to restore, at the end of interception, the `ReturnValue` to the value that actually made it back to the calling code.
-
- * The same recommendation&mdash;restoration to the value(s) observed by the calling code&mdash;applies to by-ref arguments that have been repeatedly overwritten using `invocation.SetArgumentValue`.
+ * 相同的建议（恢复调用代码所观察到的值），适用于使用invocation.SetArgumentValue反复覆写的引用参数。
